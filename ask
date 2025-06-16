@@ -1,17 +1,17 @@
 #!/bin/env bash
 # TODO: work in non interactive shell when in graphical environment through dmenu and notify-send
-[[ $- != *i* ]] || exit 1
+# [[ $- != *i* ]] || exit 1
 
 main() {
     # handle help
     [[ $1 == "-h" || $1 == --help ]] \
         && print-usage && exit 0
 
-    # check for no default flag 
+    # handle nodefault flag 
     nodefault=0; [[ $1 == "-n" || $1 == --nodefault ]] && nodefault=1 && shift 1 
 
     # vars
-    msg="${1:-"confirm?[Y/n]: "}"
+    msg=${1:-"confirm?[Y/n]: "}
     default="${2:-yes}"
 
     # prompt

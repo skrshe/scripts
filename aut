@@ -1,81 +1,103 @@
 #!/bin/env bash
 [[ $- != *i* ]]; mode=$?
 
-# check for -R remove flag
-remove=0; [[ $1 == "-R" ]] && shift 1 && remove=1
+# check for flags
+remove=false; backup=false; 
+while true; do 
+    case "$1" in 
+        -b) backup=true; shift;;
+        -R) remove=true; shift;;
+        # --) shift; break;;
+        *) break;;
+    esac
+done
 
-# vars
-script="$1"
-dir=${2:-~/bin}
-#
-final="$dir/$script"
-
-
-
+# TODO:
+# git
+#   Check if file is tracked
+#     git ls-files --error-unmatch "$file" > /dev/null 2>&1; then
+#   or renamed from tracked
+#     git diff --name-status --diff-filter=R | awk '{print $3}' | grep -Fxq "$file"; then
 
 # main declaration
 main() {
+    # vars
+    script="$1"
+    dir=${2:-$HOME/bin}
+    #
+    final="$dir/$script"
 
-# handle removal
-if [[ $remove == 1 ]]; then
-    [[ ! -f $final ]] \
-        && echo $script not found in $dir. && abort 1
 
-    if [[ `ask "delete $script?[y/N]" no yes no` =~ $yes ]]; then
-        if [[ `ask -d "enter \"$script\" to delete: "` == $script ]]; then
-            echo deleting $final
-            rm $final
-            exit 0
+
+
+    # handle removal
+    if $remove; then
+        [[ ! -f $final ]] \
+            && echo $script not found in $(tildafy $dir). && abort 1
+
+        if askn "delete $script?[y/N]: "; then
+            if [[ `ask -d "enter \"$script\" to delete: "` == $script ]]; then
+                echo deleting $final
+                rm $final
+                exit 0
+            fi
+
+            echo script did not match input
+            abort 2
         fi
-        echo script did not match input
-        abort 2
+
+        abort 3
     fi
 
-    abort 3
-fi
-
-# check for $script
-[[ -z $script ]] \
-	&& echo "no supplied script name" && abort 1
-
-# check if $script is a dir
-[[ -d $final ]] \
-    && echo "$script is not a file" && abort 2
-
-# make sure $script exists
-if [[ ! -e $final ]]; then
-	echo "$script doesnt exist..."
-
-    if [[ ! `ask "create $dir/$script?[Y/n]: "` =~ $yes ]]; then
-		abort 3
+    if $backup; then
+        # git -C $HOME/bin commit -m "changes"
+        # git -C $HOME/bin push
     fi
 
-	touch $final
-	chmod +x $final
-	echo -e "#!/bin/env bash\n" > $final
-fi
+    # check for $script
+    [[ -z $script ]] \
+        && echo "no supplied script name" && abort 1
 
-# make sure $script is executable
-if [[ ! $(stat -c "%A" $final) =~ "x" ]]; then
-    echo $script is not executable
-    [[ `ask "make executable?[Y/n]"` =~ $yes ]] \
-        && chmod +x $final || abort 4
-fi
+    # check if $script is a dir
+    [[ -d $final ]] \
+        && echo "$script is not a file" && abort 2
 
-# choose what to do 
-# check shell interactivity
-if [[ $mode = 0 ]]; then
-    ${EDITOR:-vi} $final; exit 0
+    # make sure $script exists
+    if [[ ! -e $final ]]; then
+        echo "$script doesnt exist..."
 
-    # check if graphical session
-elif [[ $(tset -q) == alacritty ]]; then 
-    ${VISUAL:-alacritty -e ${EDITOR:-vi}} $final; exit 0
+        ! asky "create $(tidafy $dir)/$script?[Y/n]: " \
+            && abort 3
 
-# exit otherwise
-else 
-    echo your platform is not supported by aut.
-    abort 130
-fi
+        touch $final
+        chmod +x $final
+        echo -e "#!/bin/env bash\n" > $final
+        
+        [[ $dir == "$HOME/bin" ]] \
+            && asky "add $script" && git -C  add $final
+    fi
+
+    # make sure $script is executable
+    if [[ ! $(stat -c "%A" $final) =~ "x" ]]; then
+        echo $script is not executable
+        asky "make executable?[Y/n]" \
+            && chmod +x $final || abort 4
+    fi
+
+    # choose what to do 
+    # check shell interactivity
+    if [[ $mode = 0 ]]; then
+        ${EDITOR:-vi} $final; exit 0
+
+        # check if graphical session
+    elif [[ $(tset -q) == alacritty ]]; then 
+        ${VISUAL:-alacritty -e ${EDITOR:-vi}} $final; exit 0
+
+    # exit otherwise
+    else 
+        echo your platform is not supported by aut.
+        abort 130
+    fi
 }
 
 
@@ -90,6 +112,8 @@ abort() {
 }
 
 yes="^[Yy][Ee]?[Ss]?$"
+asky() { [[ `ask $1` =~ $yes ]] || exit 0 }
+askn() { [[ `ask $1 no` =~ $yes ]] || exit 0 }
 
 aware-echo() {
     [[ ! -z $1 ]]; supplied=$?
@@ -105,4 +129,10 @@ aware-echo() {
     fi
 }
 
+tildafy() { echo ${1/#$HOME/~} }
+
+
+# main callecho "$HOME/cheese" | while read -r input; do
+  echo "${input/#$HOME/~}"
+done
 main
