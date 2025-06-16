@@ -19,6 +19,8 @@ echo "    P   $packages" 						#packages
 echo '    E   i3wm' #$WM_NAME 							#enviroment
 echo '    R  6.5.0'								#kernel revision
 
+# hi
+
 # wide
 #       /\    		 dydact
 #      /\ \   		S  ubuntu

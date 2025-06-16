@@ -65,16 +65,11 @@ fi
 # choose what to do 
 # check shell interactivity
 if [[ $mode = 0 ]]; then
-    ${EDITOR:-vi} $final 
-
-    exit 0
+    ${EDITOR:-vi} $final; exit 0
 
     # check if graphical session
 elif [[ $(tset -q) == alacritty ]]; then 
-    [[ -z $VISUAL ]] &&       $VISUAL $final \
-        || alacritty -e ${EDITOR:-vi} $final
-
-    exit 0
+    ${VISUAL:-alacritty -e ${EDITOR:-vi}} $final; exit 0
 
 # exit otherwise
 else 
