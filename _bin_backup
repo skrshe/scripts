@@ -1,0 +1,9 @@
+#!/bin/env bash
+set -e
+
+git add -u
+
+git commit -m `ask "what changed?: " "script changes"`
+
+git push
+
