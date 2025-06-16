@@ -1,0 +1,27 @@
+#!/bin/bash
+STATE_DIR="/tmp"
+STATE_FILE="$STATE_DIR/statefile.txt"
+
+activestate="$(playerctl -l)"
+
+# Function to write state
+write_state() {
+    echo $1 > "$STATE_FILE"
+    chmod 644 "$STATE_FILE"
+}
+
+# Function to read state
+if [ -f "$STATE_FILE" ]; then
+    newstate="$(cat $STATE_FILE)"
+else
+    newstate="default_state"
+fi
+
+# Main script logic
+if [ $newstate == 1 ]; then
+    echo $newstate
+    write_state 0
+else
+    echo $newstate
+    write_state 1
+fi

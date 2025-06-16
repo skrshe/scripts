@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# dmenu theming
+lines="-l 4"
+# font="-fn Inconsolata-15"
+font=""
+colors="-nb #2C323E -nf #9899a0 -sb #BF616A -sf #2C323E"
+
+first_prompt="i3 logout"
+opt1="Redshift off\nqwerty\ndvorak\nsyncthing\n---\nlogout"
+opt2="Yes\nNo"
+
+
+ask() {
+	answer="$( echo -e "$1" | dmenu -i -p "$2" $lines $colors $font )"
+}
+
+ask "$opt1" "$first_prompt"
+
+case $answer in
+"Redshift off")
+    qredshift -x
+    exit 0;;
+"qwerty")
+    setxkbmap us
+    exit 0;;
+"dvorak")
+    setxkbmap dvorak
+    exit 0;;
+"syncthing")
+    syncthing -browser-only
+    exit 0;;
+"syncthing")
+    dmenu-i3-logout
+    exit 0;;
+*)
+    exit 0;;
+esac
+
+exit 0
+
+# ask "$opt2" "Restart $HOSTNAME?"
+# if [[ $answer == "Yes" ]]; then
+#     systemctl reboot
+# fi

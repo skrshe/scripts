@@ -1,0 +1,80 @@
+#!/bin/env bash
+# TODO: work in non interactive shell when in graphical environment through dmenu and notify-send
+mode=$([[ $- != *i* ]])
+[[ $mode > 1 ]] && return
+
+booldefault=1
+
+ask-start() {
+
+# handle help
+[[ $1 == "-h" || $1 == --help ]] \
+    && print-usage && exit 0
+
+# check for no default flag 
+[[ $1 == "-d" || $1 == --nodefault ]] \
+    && booldefault=0 && shift 1 
+
+# vars
+msg="${1:-"confirm?[Y/n]: "}"
+default="${2:-yes}"
+
+
+
+# prompt
+answer="$(gum input \
+    --placeholder=""       \
+    --prompt="$msg"        \
+    --cursor.mode="static" \
+    --no-show-help         \
+    --strip-ansi           \
+    --cursor.foreground="14" \
+    # --prompt.foreground=""
+    # --placeholder.foreground="240"
+    # --value="$default"
+    # --timeout=0s
+)"; [[ $? != 0 ]] && exit 1
+
+# handle no default
+[[ $booldefault == 1 ]] \
+    && [[ $answer == "" ]] && answer=$default
+
+echo $answer
+exit 0
+}
+
+# definitions
+print-usage() {
+    cat << EOF
+A simple prompt to get user input
+
+usage: ask [options] <prompt> <default answer> <other answers>...
+
+        <prompt>, <default answer> and <other answers> are optional and will prompt \"confirm?[Y/n]: \" and default to \"yes\" and \"no\" if not supplied.
+
+options:
+    -h, --help         
+        for this message.
+    -n, --no-as-default 
+        default  to no and supply yes as other
+    -d, --nodefault
+        dont default to <default answer> if answer is empty.
+
+!!! unimplemented options !!!:
+    -e, --noescape     
+        dont exit application on escape.
+    -c, --compare
+        take argument as input and return regex matching the first letter and the word in completion.
+        default to yes
+    
+EOF
+
+    exit 0
+}
+
+# TODO: 
+# function that formats help 
+#   no indent = bold highlighting
+#   highlight options 
+#   >= 2 indents; more than 5 unwrapped space seperated words = wrap between terminal width and indent height
+

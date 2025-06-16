@@ -1,0 +1,2 @@
+#!/bin/bash
+nm-online -t 1 &> /dev/null && notify-send "wan connected" || notify-send "no wifi"

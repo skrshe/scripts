@@ -1,0 +1,99 @@
+#!/bin/bash
+packages=$(apt list --installed 2>/dev/null|wc -l)
+
+clear
+
+echo '          _'
+echo '      ---(_)'
+echo "   _/ '---  \ "
+echo '  (_) |   |'-
+echo '    \ ,--- _/'
+echo '       ---(_)'
+echo ''
+echo '   '$USER@$HOSTNAME
+echo -e "    \e[0;36m-\e[0;36m-\e[0;35m-\e[0;34m-\e[0;33m-\e[0;32m-\e[0;31m-\e[1;36m-\e[0m"
+echo -e "    \e[1;35m-\e[1;34m-\e[1;33m-\e[1;32m-\e[1;33m-\e[1;32m-\e[1;31m-\e[1;31m-\e[0m"
+echo '    S ubuntu' 								#distro
+echo "    U    11h" 	#uptime
+echo "    P   $packages" 						#packages
+echo '    E   i3wm' #$WM_NAME 							#enviroment
+echo '    R  6.5.0'								#kernel revision
+
+# wide
+#       /\    		 dydact
+#      /\ \   		S  ubuntu
+#     / __ \  		U 1:1:23h
+#    / (  ) \  		P    2253
+#   / _|  |_\\ 		E    i3wm
+#  /.'      `.\ 	R 22.04.3
+# long
+#       /\
+#      /\ \
+#     / __ \
+#    / (  ) \
+#   / _|  |_\\
+#  /.'      `.\
+#     dydact
+#   S  ubuntu
+#   U 1:1:23h
+#   P    2253
+#   E    i3wm
+#   R 22.04.3
+# bnouys
+# (\ /)   (\ /)
+# ( · ·)  ( . .)
+# c(")(") c(")(")
+# bunnymarkeyes=( '· ·' '. .'
+# bunnymark = <<art
+# (\ /)
+# ( $bunnymarkeyes)
+# c(")(")
+# art
+# bunnymarkDC= << art
+#          $d$f1$h  $t$wmname
+#   (\ /)     $f3$k  $t$kernel
+#   ( $d. .$t)    $f2$sh  $t$shell
+#   c($f1"$t)($f1"$t)   $f5$r  $t$resolution
+#             $f4$w  $t$wifiname
+# art
+#
+# mini= << art
+#  /\  ⡇⣿⣿⣿⠖
+# /⎺⎺\ ⠇⠿⠏
+# art
+# arch= << art
+#      /\
+#     /\ \
+#    / __ \
+#   / (  ) \
+#  / _|  |_\\\\
+# /.'      \`\.\\
+# art
+# tux= << art
+#     .--.
+#    |o_o |
+#    |:_/ |
+#   //   \ \
+#  (|     | )
+# /'|_   _/'\
+# \___)=(___/
+# art
+#
+# mint= << art
+#  ___________
+# |_          \
+#   | | _____ |
+#   | | | | | |
+#   | | | | | |
+#   | \_____/ |
+#   \_________/
+# art
+#
+# ubuntu= << art
+#          _
+#      ---(_)
+#  _/  ---  \
+# (_) |   |
+#   \  --- _/
+#      ---(_)
+# art

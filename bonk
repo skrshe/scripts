@@ -1,0 +1,4 @@
+#!/bin/bash
+
+i3run --instance mpvbonk --rename mpv -- mpv  ~/msc/memes/pika-bonk.mp4
+

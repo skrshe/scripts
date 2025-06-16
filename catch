@@ -1,0 +1,109 @@
+#!/bin/bash
+# catch need and return footage
+duration=${2:-15}
+timeout=${3:-5}
+
+dir=$(xdg-user-dir SCREENSHOTS)
+[ ! -d $dir ] && mkdir -p $dir
+
+dateline="$(date +'%Y%m%d-%H%M%S')"
+file=$4
+completed=0
+
+actions="snap\nclip\nshot\ngif\nvid\nrec"
+
+choice=${1:-$(echo -e $actions | dmenu -p catch -l 6)}
+
+# TODO: dir not changing file supplied
+if [[ `echo $choice|wc -w` > 1 ]]; then
+
+    choicearray=(${choice})
+    choice=${choicearray[0]}
+    duration=${choicearray[1]}
+    timeout=${choicearray[2]}
+    # dir=$PWD
+    file=${choicearray[3]}
+    notify-send tripped
+fi
+
+case $choice in
+snap)
+    file=${file:-"clip_$dateline.png"}
+    timeout=${3:-1}
+    [ ! $timeout > 2 ] && countdownify $timeout
+
+    maim -u $dir/$file \
+		&& completed=1 \
+		|| notify-send "aborting: nothing selected"
+	;;
+clip)
+	file=${file:-"clip_$dateline.png"}
+    geometry=$(slop)
+
+    timeout=${3:-1}
+    [ ! $timeout > 2 ] && countdownify $timeout
+
+	maim -u -g $geometry  $dir/$file \
+		&& completed=1 \
+		|| notify-send "aborting: nothing selected"
+	;;
+shot)
+    file=${file:-"clip_$dateline.png"}
+
+    timeout=${3:-1}
+    [ ! $timeout > 2 ] && countdownify $timeout
+
+    maim -u $dir/$file \
+		&& completed=1 \
+		|| notify-send "aborting: nothing selected"
+	;;
+gif)
+	file=${file:-"$dateline.gif"}
+    geometry=$(slop -f "-x %x -y %y -w %w -h %h")
+
+    countdownify $timeout
+
+    # TODO: implement countdown with dunstify
+	byzanz-record -d $duration $geometry \
+        $dir/$file \
+		&& completed=1 \
+		|| notify-send "aborting: nothing selected"
+	;;
+vid)
+    # TODO: add audio pipewire?
+	file=${file:-"vid_$dateline.mpg"}
+    geometry=$(slop -f "-video_size %wx%h  -i :0.0+%x,%y")
+
+    countdownify $timeout
+
+    ffmpeg -f x11grab -show_region 1 \
+        -t $duration $geometry $dir/$file \
+        && completed=1 \
+	    || notify-send "aborting: nothing selected"
+    # notify-send "aborting: $choice not implemented"
+	;;
+rec)
+    # TODO: implement recording audio
+	notify-send "aborting: the catch $choice is not implemented"
+	;;
+"") exit ;;
+*) notify-send "aborting: $choice is not a \
+    supported catch"
+	;;
+esac
+
+if [ "$completed" == 1 ]; then
+    done-action=$(dunstify -A yes,ACCEPT "screen clipped" "$choice saved to $dir/$file")
+
+	if [ "$done-action" == yes ]; then
+		case $choice in
+        snap) imv $dir/$file ;;
+        clip) imv $dir/$file ;;
+        shot) imv $dir/$file ;;
+        gif) mpv --keep-open=yes $dir/$file ;;
+        vid) mpv --keep-open=yes $dir/$file ;;
+        rec) mpv --keep-open=yes $dir/$file ;;
+		esac
+	fi
+fi
+

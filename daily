@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+i3-msg workspace number 3
+i3-msg exec alacritty
+
+sleep 0.1
+
+i3-msg workspace number 1
+i3-msg exec qutebrowser
+
+

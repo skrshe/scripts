@@ -1,0 +1,24 @@
+#!/bin/bash
+set status=`warp-cli status`
+
+if [[ $status =~ .*Disconnected ]]; then 
+    warp-cli connect && set result=yes 
+
+    if [[ $result == "yes" ]]; then
+        echo "cloudflare enabled"
+        notify-send "cloudflare connected"
+    else
+        echo "cloudflare failed" 
+        notify-send "cloudflare failed"
+    fi
+else
+    warp-cli disconnect && set result=yes 
+    
+    if [[ $result == "yes" ]]; then
+        echo "cloudflare exited"
+        notify-send "cloudflare exited"
+    else
+        echo "cloudflare failed to disengage" 
+        notify-send "cloudflare failed to disengage"
+    fi
+fi

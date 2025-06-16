@@ -1,0 +1,10 @@
+#!/bin/bash
+count=$1
+
+while [[ $count > 0 ]]; do
+    sleep 1
+    dunstify -r 1  $count &
+    ((count--))
+done
+sleep 1
+dunstify -C 1

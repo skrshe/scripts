@@ -1,0 +1,113 @@
+#!/bin/env bash
+[[ $- != *i* ]]; mode=$?
+
+# check for -R remove flag
+remove=0; [[ $1 == "-R" ]] && shift 1 && remove=1
+
+# vars
+script="$1"
+dir=${2:-~/bin}
+#
+final="$dir/$script"
+
+
+
+
+# main declaration
+main() {
+
+# handle removal
+if [[ $remove == 1 ]]; then
+    [[ ! -f $final ]] \
+        && echo $script not found in $dir. && abort 1
+
+    if [[ `ask "delete $script?[y/N]" no yes no` =~ $yes ]]; then
+        if [[ `ask -d "enter \"$script\" to delete: "` == $script ]]; then
+            echo deleting $final
+            rm $final
+            exit 0
+        fi
+        echo script did not match input
+        abort 2
+    fi
+
+    abort 3
+fi
+
+# check for $script
+[[ -z $script ]] \
+	&& echo "no supplied script name" && abort 1
+
+# check if $script is a dir
+[[ -d $final ]] \
+    && echo "$script is not a file" && abort 2
+
+# make sure $script exists
+if [[ ! -e $final ]]; then
+	echo "$script doesnt exist..."
+
+    if [[ ! `ask "create $dir/$script?[Y/n]: "` =~ $yes ]]; then
+		abort 3
+    fi
+
+	touch $final
+	chmod +x $final
+	echo -e "#!/bin/env bash\n" > $final
+fi
+
+# make sure $script is executable
+if [[ ! $(stat -c "%A" $final) =~ "x" ]]; then
+    echo $script is not executable
+    [[ `ask "make executable?[Y/n]"` =~ $yes ]] \
+        && chmod +x $final || abort 4
+fi
+
+# choose what to do 
+# check shell interactivity
+if [[ $mode = 0 ]]; then
+    ${EDITOR:-vi} $final 
+
+    exit 0
+
+    # check if graphical session
+elif [[ $(tset -q) == alacritty ]]; then 
+    [[ -z $VISUAL ]] &&       $VISUAL $final \
+        || alacritty -e ${EDITOR:-vi} $final
+
+    exit 0
+
+# exit otherwise
+else 
+    echo your platform is not supported by aut.
+    abort 130
+fi
+}
+
+
+
+
+# definitions 
+abort() {
+    [[ -z $1 ]] || echo no exit code supplied && exit 1337
+    echo 
+    echo aborting...
+    exit $1
+}
+
+yes="^[Yy][Ee]?[Ss]?$"
+
+aware-echo() {
+    [[ ! -z $1 ]]; supplied=$?
+
+    if [[ $supplied > 0 ]]; then 
+        if [[ $mode == 0 ]]; then
+            echo $@
+        elif [[ `tset -q` == alacritty ]]; then
+            notify-send $@
+        fi
+    else
+        echo
+    fi
+}
+
+main

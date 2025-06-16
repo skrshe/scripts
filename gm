@@ -1,0 +1,128 @@
+#!/bin/env bash
+[[ $- != *i* ]]; mode=$?
+
+# check for begining flag
+remove=0; [[ $1 == "-R" ]] && remove=1 && shift 1
+backup=0; [[ $1 == "-b" ]] && backup=1 && shift 1
+
+# main to keep logic at top of script and call later
+main() {
+    # vars
+    dir=$(xdg-user-dir DOWNLOADS || echo ~/msc)/repos
+    
+    repo="$(parse-repo-slug $1)" 
+    wrongrepo=$?
+
+    group="$2"
+    alias=${3:-$(basename ${repo#.git})}
+    #
+    final="$dir"
+
+
+
+
+    # check repo was supplied
+    if [[ wrongrepo != 0 ]]; then
+        case $repo in
+            "") echo "gm <repo> not supplied"; abort 1;;
+            # TODO: properly parse flags to not need this
+            -*) echo "<repo> -* not supported, use git clone."; abort 1;;
+        esac
+        
+        
+        echo "<repo> $repo not supported"
+        print-usage
+        abort 1 
+    fi
+
+    # check for group
+    if [[ -z $group ]]; then
+        if [[ ! -d $dir/$group ]] 
+            [[ -e $dir/$group ]]
+            [[ `ask "create $group?[Y/n]"` =~ $yes ]] \
+                && final=$dir/$group 
+                || abort 1
+        fi
+    fi
+
+    # mkdir 
+    mkdir -p $final
+
+    # clone repo
+    git clone "$repo" "$final/alias"
+    exit 0
+}
+
+
+
+
+
+
+
+
+# definitions 
+abort() {
+    [[ -z $1 ]] || echo no exit code supplied && exit 1337
+    echo 
+    echo aborting...
+    exit $1
+}
+
+yes="^[Yy][Ee]?[Ss]?$"
+
+print-usage() {
+    cat << EOF
+Usage:
+    gm [options] <repo> <group> <alias>
+        or
+    gm <repo>
+
+Arguments:
+    <repo>
+        the git repository url.
+    <group>
+        the directory to put the <repo> directory in.
+    <alias>
+        what to  call give <repo> directory.
+
+Options:
+    -h, --help
+        print this help message.
+
+!!! Options Not Implemented !!!:
+    -s, spawn <repo>
+        create and/or clone <repo> from a list of remotes (i.e. github, gitlab, sourcehut)
+    -m, modify
+        set remote repo options.
+    -c, config 
+        set gimme options.
+    -g, graph
+        asscii graph some kinds of git data.
+    -a, alias
+        create a top level alias in `gm [your-tool-here]` to any script
+    -b, breathe
+        very simple git porcelain
+EOF
+    exit 0
+}
+
+parse-repo-slug() {
+    repo-slug=$1
+
+    [[ ! -z $repo-slug ]] echo && exit 1
+    [[ $repo-slug =~ ^-\S* ]] echo $repo-slug && exit 1 
+
+    [[ $repo-slug =~ ^https?//.* ]] && echo $repo-slug && return
+
+    IFS='/' read -ra elements <<< $1 
+    case ${#elements["@"]} in
+        # TODO: handle git-remote searching for $repo-slug
+        1) exit 1;;
+        2) echo "https://github.com/$repo-slug"  && exit 0;;
+        3) echo "https://$repo-slug" && exit 0;;
+    esac
+    exit 1
+}
+
+# main call
+main

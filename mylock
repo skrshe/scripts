@@ -1,0 +1,6 @@
+#!/bin/bash
+i3lock-fancy \
+    # -c 000000 \
+     #-i ~/msc/pix/lipopoil-resized.png \
+    # -u -t -e
+    #!/bin/sh

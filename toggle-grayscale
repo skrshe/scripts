@@ -1,0 +1,31 @@
+#!/bin/bash
+STATE_DIR="/tmp"
+STATE_FILE="$STATE_DIR/togglegrayscale"
+
+# Function to write state
+write_state() {
+    echo $1 > "$STATE_FILE"
+    chmod 644 "$STATE_FILE"
+}
+
+# Function to read state
+if [ -f "$STATE_FILE" ]; then
+    newstate="$(cat $STATE_FILE)"
+else
+    newstate="default_state"
+fi
+
+# Main script logic
+if [ $newstate == 1 ]; then
+    echo color
+    set-grayscale -c
+    dunstify --timeout=1000 color
+    sleep 0.1
+    write_state 0
+else
+    echo grayscale
+    set-grayscale -g
+    sleep 0.1
+    dunstify --timeout=1000 grayscale
+    write_state 1
+fi

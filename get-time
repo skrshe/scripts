@@ -1,0 +1,20 @@
+#!/bin/env bash
+
+send-notification () {
+    if hash dunstify &>/dev/null; then
+        dunstify -r $1 "$2" 
+
+    elif hash notify-send $>/dev/null; then
+        notify-send -r $1 "$2"
+
+    else 
+        shift 1
+        echo $@
+    fi
+}
+
+if [[ ! $1 =~ ^cal.* ]]; then 
+    send-notification 102 "   $(date +%H:%M)"
+else
+    send-notification 103 "   $(date +"%a-%b %d/%m/%y")"
+fi

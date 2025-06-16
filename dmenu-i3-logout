@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# dmenu theming
+lines="-l 4"
+# font="-fn Inconsolata-15"
+font=""
+colors="-nb #2C323E -nf #9899a0 -sb #BF616A -sf #2C323E"
+
+first_prompt="i3 logout"
+opt1="Lock\nLog-out\nRestart\nShutdown"
+opt2="Yes\nNo"
+
+
+ask() {
+	answer="$( echo -e $1 | dmenu -i -p "$2" $lines $colors $font )"
+}
+
+ask "$opt1" "$first_prompt"
+
+case $answer in
+    "Lock")
+        mylock
+		exit 0;;
+    "Log-out")
+        ask "$opt2" "Log out of i3?"
+        if [[ $answer == "Yes" ]]; then
+			i3-msg exit
+            # xfce4-session-logout -l
+		fi
+        exit 0
+        ;;
+    "Restart")
+        ask "$opt2" "Restart $HOSTNAME?"
+        if [[ $answer == "Yes" ]]; then
+			systemctl reboot
+		fi
+        exit 0
+        ;;
+    "Shutdown")
+        ask "$opt2" "Shutdown $HOSTNAME?"
+        if [[ $answer == "Yes" ]]; then
+			systemctl poweroff
+		fi
+        exit 0
+        ;;
+esac
+
+exit 0

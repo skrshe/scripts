@@ -1,0 +1,28 @@
+#!/bin/env bash
+cd /sys/class/power_supply/BAT0/
+charge="$(cat capacity)"
+state="$(cat status)"
+
+icon=""
+
+if    [[ $state =~ ^[Cc].* ]]; then icon=""
+else
+    if   [[ $charge >   80 ]]; then icon="" 
+    elif [[ $charge >   75 ]]; then icon=""
+    elif [[ $charge >   40 ]]; then icon=""
+    elif [[ $charge -ge 11 ]]; then icon=""
+    elif [[ $charge <   10 ]]; then icon=""
+    fi
+fi
+
+[[ $charge == 100 ]] && charge=99
+
+if hash dunstify &>/dev/null; then
+    dunstify -r 101 "$icon  $charge"
+
+elif hash notify-send $>/dev/null; then
+    notify-send "$icon  $charge"
+
+else 
+    echo "$icon  $charge"
+fi
