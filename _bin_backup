@@ -1,9 +1,9 @@
 #!/bin/env bash
-set -e
+set -xe
 
 git add -u
 
-git commit -m `ask "what changed?: " "script changes"`
+git commit -m "$(ask "what changed?: " "script changes")"
 
 git push
 

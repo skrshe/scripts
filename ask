@@ -1,47 +1,40 @@
 #!/bin/env bash
 # TODO: work in non interactive shell when in graphical environment through dmenu and notify-send
-mode=$([[ $- != *i* ]])
-[[ $mode > 1 ]] && return
+[[ $- != *i* ]] || exit 1
 
-booldefault=1
+main() {
+    # handle help
+    [[ $1 == "-h" || $1 == --help ]] \
+        && print-usage && exit 0
 
-ask-start() {
+    # check for no default flag 
+    nodefault=0; [[ $1 == "-n" || $1 == --nodefault ]] && nodefault=1 && shift 1 
 
-# handle help
-[[ $1 == "-h" || $1 == --help ]] \
-    && print-usage && exit 0
+    # vars
+    msg="${1:-"confirm?[Y/n]: "}"
+    default="${2:-yes}"
 
-# check for no default flag 
-[[ $1 == "-d" || $1 == --nodefault ]] \
-    && booldefault=0 && shift 1 
+    # prompt
+    # possibly useful arguments: --prompt.foreground="" --placeholder.foreground="240" --value="$default" --timeout=0s
+    answer="$(gum input \
+        --placeholder=""       \
+        --prompt="$msg"        \
+        --cursor.mode="static" \
+        --no-show-help         \
+        --strip-ansi           \
+        --cursor.foreground="14" \
+    )"; [[ $? != 0 ]] && exit 1
 
-# vars
-msg="${1:-"confirm?[Y/n]: "}"
-default="${2:-yes}"
+    # handle no default
+    [[ $nodefault == 0 ]] \
+        && [[ $answer == "" ]] && answer=$default
 
-
-
-# prompt
-answer="$(gum input \
-    --placeholder=""       \
-    --prompt="$msg"        \
-    --cursor.mode="static" \
-    --no-show-help         \
-    --strip-ansi           \
-    --cursor.foreground="14" \
-    # --prompt.foreground=""
-    # --placeholder.foreground="240"
-    # --value="$default"
-    # --timeout=0s
-)"; [[ $? != 0 ]] && exit 1
-
-# handle no default
-[[ $booldefault == 1 ]] \
-    && [[ $answer == "" ]] && answer=$default
-
-echo $answer
-exit 0
+    echo $answer
+    exit 0
 }
+
+
+
 
 # definitions
 print-usage() {
@@ -68,13 +61,14 @@ options:
         default to yes
     
 EOF
-
-    exit 0
 }
+
+# call the main loop
+main
 
 # TODO: 
 # function that formats help 
 #   no indent = bold highlighting
-#   highlight options 
+#   highlight arguments i.e. <thing> (thing) [thing] 
 #   >= 2 indents; more than 5 unwrapped space seperated words = wrap between terminal width and indent height
 
