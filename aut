@@ -7,9 +7,9 @@ while true; do
     case "$1" in 
         -b) backup=true; shift;;
         -R) remove=true; shift;;
-        # --) shift; break;;
         *) break;;
     esac
+        # --) shift; break;;
 done
 
 # TODO:
@@ -19,17 +19,17 @@ done
 #   or renamed from tracked
 #     git diff --name-status --diff-filter=R | awk '{print $3}' | grep -Fxq "$file"; then
 
+# vars
+script="$1"
+dir=${2:-$HOME/bin}
+#
+final="$dir/$script"
+
+
+
+
 # main declaration
 main() {
-    # vars
-    script="$1"
-    dir=${2:-$HOME/bin}
-    #
-    final="$dir/$script"
-
-
-
-
     # handle removal
     if $remove; then
         [[ ! -f $final ]] \
@@ -48,10 +48,11 @@ main() {
 
         abort 3
     fi
-
+    
+    # handle backup
     if $backup; then
-        # git -C $HOME/bin commit -m "changes"
-        # git -C $HOME/bin push
+        git -C $HOME/bin commit -m "$(ask "commit message: " changes)"
+        git -C $HOME/bin push
     fi
 
     # check for $script
@@ -66,15 +67,15 @@ main() {
     if [[ ! -e $final ]]; then
         echo "$script doesnt exist..."
 
-        ! asky "create $(tidafy $dir)/$script?[Y/n]: " \
+        ! asky "create $(tildafy $dir)/$script?[Y/n]: " \
             && abort 3
 
         touch $final
         chmod +x $final
         echo -e "#!/bin/env bash\n" > $final
         
-        [[ $dir == "$HOME/bin" ]] \
-            && asky "add $script" && git -C  add $final
+        # [[ $dir == "$HOME/bin" ]] \
+        #     && asky "add $script to binary git?: " && git -C $HOME/bin add $final &>/dev/null
     fi
 
     # make sure $script is executable
@@ -112,8 +113,8 @@ abort() {
 }
 
 yes="^[Yy][Ee]?[Ss]?$"
-asky() { [[ `ask $1` =~ $yes ]] || exit 0 }
-askn() { [[ `ask $1 no` =~ $yes ]] || exit 0 }
+asky() { [[ `ask "$1"` =~ $yes ]] || exit 0; }
+askn() { [[ `ask "$1" no` =~ $yes ]] || exit 0; }
 
 aware-echo() {
     [[ ! -z $1 ]]; supplied=$?
@@ -129,10 +130,7 @@ aware-echo() {
     fi
 }
 
-tildafy() { echo ${1/#$HOME/~} }
+tildafy() {  echo $1 | sed "s|^$HOME|~|"; }
 
-
-# main callecho "$HOME/cheese" | while read -r input; do
-  echo "${input/#$HOME/~}"
-done
+# main call
 main

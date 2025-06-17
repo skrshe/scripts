@@ -2,17 +2,35 @@
 # TODO: work in non interactive shell when in graphical environment through dmenu and notify-send
 # [[ $- != *i* ]] || exit 1
 
+# check flags
+dohelp=false; nodefault=false;
+while true; do
+    case "$1" in
+        -h|--help) dohelp=true; shift;;
+        -n|--nodefault) nodefault=true; shift;;
+        # --) shift; break;;
+        *) break;;
+    esac
+done
+
+# TODO: 
+# function that formats help 
+#   no indent = bold highlighting
+#   highlight arguments i.e. <thing> (thing) [thing] 
+#   >= 2 indents; more than 5 unwrapped space seperated words = wrap between terminal width and indent height
+
+# vars
+msg=${1:-"confirm?[Y/n]: "}
+default="${2:-yes}"
+
+
+
+
 main() {
     # handle help
-    [[ $1 == "-h" || $1 == --help ]] \
-        && print-usage && exit 0
-
-    # handle nodefault flag 
-    nodefault=0; [[ $1 == "-n" || $1 == --nodefault ]] && nodefault=1 && shift 1 
-
-    # vars
-    msg=${1:-"confirm?[Y/n]: "}
-    default="${2:-yes}"
+    if $dohelp; then
+        print-usage && exit 0
+    fi
 
     # prompt
     # possibly useful arguments: --prompt.foreground="" --placeholder.foreground="240" --value="$default" --timeout=0s
@@ -26,8 +44,9 @@ main() {
     )"; [[ $? != 0 ]] && exit 1
 
     # handle no default
-    [[ $nodefault == 0 ]] \
-        && [[ $answer == "" ]] && answer=$default
+    if ! $nodefault; then
+        [[ $answer == "" ]] && answer=$default
+    fi
 
     echo $answer
     exit 0
@@ -64,11 +83,4 @@ EOF
 }
 
 # call the main loop
-main
-
-# TODO: 
-# function that formats help 
-#   no indent = bold highlighting
-#   highlight arguments i.e. <thing> (thing) [thing] 
-#   >= 2 indents; more than 5 unwrapped space seperated words = wrap between terminal width and indent height
-
+main "$@"
