@@ -11,26 +11,32 @@ help-prompt() {
     echo "   -g, --generate     add a build.sh to your project"
 }
 
+dohelp=false; generate=false
+while true; do
+    case "$1" in
+        -h|--help) dohelp=true; shift;;
+        -g|--generate) generate=true; shift;;
+    esac 
+done
 
-if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
-    help-prompt
+$dohelp && help-prompt && exit 0
 
-    exit 0
-fi
-
-if [[ $1 == "-g" ]] || [[ $1 == "--generate" ]]; then
+if $generate; then
     echo creating build.sh
-    echo -n "#!/bin/env bash
+    
+    cat << EOF > build.sh 
+#!/bin/env bash
 set -xe
 
 echo build.sh: reminder no logic, please edit.
-exit 1" > build.sh 
+exit 1 
+EOF
 
     chmod +x build.sh
     exit 0
 fi
 
-if ls build.sh &> /dev/null ; then # || [ -f build*.sh]; then
+if ls build.sh &> /dev/null; then # || [ -f build*.sh]; then
     if [ ! -x build.sh ]; then
         echo Warning: build.sh is not executable
         exit 1
@@ -38,6 +44,11 @@ if ls build.sh &> /dev/null ; then # || [ -f build*.sh]; then
 
     ./build.sh $@
     exit 0
+
+if ls nob.* &> /dev/null; then
+    cc nob.c -o nob
+    ./nob
+fi
 
 elif ls *.odin &> /dev/null; then
     echo running odin run:

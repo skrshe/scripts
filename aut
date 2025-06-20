@@ -51,9 +51,14 @@ main() {
     
     # handle backup
     if $backup; then
+        echo backing up to git...
+        
         git -C $HOME/bin add -u
         git -C $HOME/bin commit -m "$(ask "commit message: " changes)"
+        
         asky "push to github?[Y/n]: " && git -C $HOME/bin push
+
+        exit 0
     fi
 
     # check for $script
@@ -108,9 +113,9 @@ main() {
 # definitions 
 abort() {
     [[ -z $1 ]] || echo no exit code supplied && exit 1337
-    echo 
-    echo aborting...
-    exit $1
+    if [[ $1 == 0 ]]; then echo -e "\nexiting...\n"; exit 0 
+    else                   echo -e "\naborting...\n"; exit $1
+    fi
 }
 
 yes="^[Yy][Ee]?[Ss]?$"
