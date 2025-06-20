@@ -1,0 +1,89 @@
+#!/bin/env bash
+
+main() {
+    # make sure .sparks exis
+    if [[ ! -f $HOME/.sparks ]]; then
+        echo "add stuff with \`spark <spark>\`" > $HOME/.sparks 
+        echo "created ~/.sparks"
+    fi
+
+    # get sparks
+    mapfile -t sparks < ~/.sparks
+
+    # handle flags
+    while true; do
+        case $1 in
+        -h|--help)   
+            print-usage
+            exit 0
+            ;;
+
+        -r|--remove) 
+            shift
+
+            for spark in "${sparks[@]}"; do
+                if [[ $spark == "$@" ]]; then
+                    sed "/^$@/d" $HOME/.sparks
+                    echo "$@ removed."
+                else echo "$@ is not in .sparks. add with
+\"spark <new spark>\""
+                    exit 1
+                fi
+            done
+
+            exit 0
+            ;;
+
+        -l|--list)   
+            echo "# sparks:" 
+
+            cat $HOME/.sparks; 
+            exit 0
+            ;;
+
+        -*)          
+            echo $1 not a supported flag. -h for help; 
+            exit 1
+            ;;
+
+        ?*)
+            echo $@ >> sparks
+            echo added \"$@\" to sparks
+            exit 0
+            ;;
+
+        *) break;;
+        esac
+    done
+    
+    # if nothing else print a random spark
+    echo "${sparks[RANDOM % ${#sparks[@]}]}"
+    exit 0
+}
+
+# defs
+print-usage() {
+    cat << EOF
+usage: spark [options] <spark>
+
+call spark to show a simple cognitohazard at random 
+
+options:
+    default
+        add arguments to spark
+    -h --help      
+        print this message
+    -r --remove    
+        remove <spark> from .sparks
+    -l --list      
+        list all <spark>s
+
+arguments:
+    <spark>
+        a small note to yourself to be shown to you at random
+EOF
+}
+
+
+# call main loop
+main "$@"
