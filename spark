@@ -47,7 +47,7 @@ main() {
             ;;
 
         ?*)
-            echo $@ >> sparks
+            echo $@ >> $HOME/.sparks
             echo added \"$@\" to sparks
             exit 0
             ;;
