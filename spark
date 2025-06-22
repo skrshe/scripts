@@ -1,10 +1,14 @@
 #!/bin/env bash
 
+# TODO:
+# -r in non int mode
+
+# main loop setup
 main() {
     # make sure .sparks exis
     if [[ ! -f $HOME/.sparks ]]; then
         echo "add stuff with \`spark <spark>\`" > $HOME/.sparks 
-        echo "created ~/.sparks"
+        aware-echo "created ~/.sparks"
     fi
 
     # get sparks
@@ -12,52 +16,80 @@ main() {
 
     # handle flags
     while true; do
-        case $1 in
-        -h|--help)   
-            print-usage
-            exit 0
-            ;;
+    case $1 in
+    -h|--help)   
+        print-usage
+        exit 0
+        ;;
 
-        -r|--remove) 
-            shift
+    -r|--remove) 
+        [[ ! -t 0 || ! -t 1 || ! -t 2 ]] \
+            && aware-echo "-r via popup not available yet" && exit 1
 
-            for spark in "${sparks[@]}"; do
-                if [[ $spark == "$@" ]]; then
-                    sed "/^$@/d" $HOME/.sparks
-                    echo "$@ removed."
-                else echo "$@ is not in .sparks. add with
-\"spark <new spark>\""
+        shift
+
+        for s in "${sparks[@]}"; do
+            if [[ "$s" == "$@"* ]]; then
+                if asky "delete $s?[Y/n]: "; then
+                    sed -i "/^$(echo -e "$s" | sed 's/[][\.*^$/]/\\&/g')$/d" \
+                        $HOME/.sparks && aware-echo "$s removed." 
+
+                    exit 0
+
+                else
+                    aware-echo "aborted..." 
                     exit 1
                 fi
+                        
+
+                exit 0
+            fi
+        done
+
+        aware-echo "$@ is not a spark. add with\n\"spark $@\""
+        exit 1
+        ;;
+
+    -l|--list)   
+        echo "# sparks:" 
+
+        cat $HOME/.sparks; 
+        exit 0
+        ;;
+
+    -*)          
+        aware-echo "$1 not a supported flag. -h for help" 
+        exit 1
+        ;;
+
+    ?*)
+        # check for int$ and print int times
+        if [[ $1 =~ ^[0-9]+$ && $# == 1 ]]; then
+            for ((i=0; i<$1; i++)); do
+                aware-echo "${sparks[RANDOM % ${#sparks[@]}]}"
             done
+            exit 0 
+        fi
+        
+        # else add to sparks
+        for spark in "${sparks[@]}"; do
+            if [[ "$spark" == "$@" ]]; then
+                aware-echo "$@ is already a spark."
+                exit 1
+            fi
+        done
 
-            exit 0
-            ;;
+        echo $@ >> $HOME/.sparks
+        aware-echo "added \"$@\" to sparks"
+        exit 0
+        ;;
 
-        -l|--list)   
-            echo "# sparks:" 
-
-            cat $HOME/.sparks; 
-            exit 0
-            ;;
-
-        -*)          
-            echo $1 not a supported flag. -h for help; 
-            exit 1
-            ;;
-
-        ?*)
-            echo $@ >> $HOME/.sparks
-            echo added \"$@\" to sparks
-            exit 0
-            ;;
-
-        *) break;;
-        esac
+    *) break;;
+    esac
     done
     
     # if nothing else print a random spark
-    echo "${sparks[RANDOM % ${#sparks[@]}]}"
+    aware-echo "${sparks[RANDOM % ${#sparks[@]}]}"
     exit 0
 }
 
@@ -70,7 +102,7 @@ call spark to show a simple cognitohazard at random
 
 options:
     default
-        add arguments to spark
+        add arguments as a <spark>
     -h --help      
         print this message
     -r --remove    
@@ -84,6 +116,32 @@ arguments:
 EOF
 }
 
+aware-echo() {
+    [[ ! -t 0 || ! -t 1 || ! -t 2 ]] \
+        && notify-send $@ \
+        || echo -e "$@" 
+}
+
+yes="^[Yy][Ee]?[Ss]?$"
+asky() { [[ `ask "$1"` =~ $yes ]] || return 1; }
+askn() { [[ `ask "$1" no` =~ $yes ]] || return 1; }
+
+print-spark() {
+    [[ $1 == -a || $1 == --all ]] && shift && aware-echo $@ 
+    # get "n " as "n"
+    weight="${1%% *}"
+    # get rest as info
+    info="${1#* }"
+
+    # get ^.*: as alias
+    alias="${info%%:*}"
+
+    # get ": stuff" as stuff
+    details="${info#*: }"
+    
+
+    echo $alias
+}
 
 # call main loop
 main "$@"

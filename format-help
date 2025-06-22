@@ -1,0 +1,9 @@
+#!/bin/env bash
+# format help
+#   nodent=$1 bold hi
+#   hi args ie <> () [] 
+#   >= 2dent & >5 nowrap words
+#   =wrap termw dentsz
+
+# read input
+
