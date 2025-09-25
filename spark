@@ -2,6 +2,7 @@
 
 # TODO:
 # -r in non int mode
+# dont take sparks with new lines
 
 # main loop setup
 main() {
@@ -95,7 +96,7 @@ main() {
 
 # defs
 print-usage() {
-    cat << EOF
+    cat << USAGE 
 usage: spark [options] <spark>
 
 call spark to show a simple cognitohazard at random 
@@ -113,7 +114,8 @@ options:
 arguments:
     <spark>
         a small note to yourself to be shown to you at random
-EOF
+USAGE
+
 }
 
 aware-echo() {

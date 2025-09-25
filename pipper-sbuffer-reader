@@ -1,0 +1,5 @@
+#!/bin/env bash
+xclip -o \
+    | piper-tts --model ~/.local/pipertts/arctic/en_US-arctic-medium.onnx --output-raw \
+    | aplay -r 24000 -f S16_LE -t raw -
+
