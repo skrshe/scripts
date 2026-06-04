@@ -5,13 +5,14 @@ state="$(cat status)"
 
 icon=""
 
-if   [[ $state =~ ^[Cc].* ]]; then icon=""
-elif [[ $charge >   80 ]];    then icon=""
-elif [[ $charge >   65 ]];    then icon=""
-elif [[ $charge >   30 ]];    then icon=""
-elif [[ $charge -ge 11 ]];    then icon=""
-else                               icon=""
+if   [[ $charge -gt 80 ]]; then icon=""
+elif [[ $charge -gt 65 ]]; then icon=""
+elif [[ $charge -gt 30 ]]; then icon=""
+elif [[ $charge -gt 10 ]]; then icon=""
+elif [[ $charge -gt 11 ]]; then icon=""
 fi
+
+[[ $state =~ ^[Cc].* ]] && icon=""
 
 [[ $charge == 100 ]] && charge=99
 

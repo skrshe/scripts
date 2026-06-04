@@ -14,7 +14,7 @@ send-notification () {
 }
 
 if [[ ! $1 =~ ^cal.* ]]; then 
-    send-notification 102 "   $(date +%H:%M)"
+    send-notification 102 "   $(date "+%I:%M %P")"
 else
     send-notification 103 "   $(date +"%a-%b %d/%m/%y")"
 fi

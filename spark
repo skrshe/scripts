@@ -6,14 +6,16 @@
 
 # main loop setup
 main() {
-    # make sure .sparks exis
-    if [[ ! -f $HOME/.sparks ]]; then
-        echo "add stuff with \`spark <spark>\`" > $HOME/.sparks 
+    spark_file="$HOME/.sparks"
+
+    # make sure .sparks file exits
+    if [[ ! -f $spark_file ]]; then
+        echo "add stuff with \`spark <spark>\`" > $spark_file 
         aware-echo "created ~/.sparks"
     fi
 
     # get sparks
-    mapfile -t sparks < ~/.sparks
+    mapfile -t sparks < $spark_file
 
     # handle flags
     while true; do
@@ -33,7 +35,7 @@ main() {
             if [[ "$s" == "$@"* ]]; then
                 if asky "delete $s?[Y/n]: "; then
                     sed -i "/^$(echo -e "$s" | sed 's/[][\.*^$/]/\\&/g')$/d" \
-                        $HOME/.sparks && aware-echo "$s removed." 
+                        $spark_file && aware-echo "$s removed." 
 
                     exit 0
 
@@ -41,7 +43,6 @@ main() {
                     aware-echo "aborted..." 
                     exit 1
                 fi
-                        
 
                 exit 0
             fi
@@ -54,7 +55,12 @@ main() {
     -l|--list)   
         echo "# sparks:" 
 
-        cat $HOME/.sparks; 
+        cat $spark_file; 
+        exit 0
+        ;;
+
+    -e|--edit)
+        $EDITOR $spark_file;
         exit 0
         ;;
 
@@ -67,7 +73,8 @@ main() {
         # check for int$ and print int times
         if [[ $1 =~ ^[0-9]+$ && $# == 1 ]]; then
             for ((i=0; i<$1; i++)); do
-                aware-echo "${sparks[RANDOM % ${#sparks[@]}]}"
+                random_index=$(shuf -i 0-$(( ${#sparks[@]} - 1 )) -n 1)
+                aware-echo "${sparks[random_index]}"
             done
             exit 0 
         fi
@@ -80,7 +87,7 @@ main() {
             fi
         done
 
-        echo $@ >> $HOME/.sparks
+        echo $@ >> $spark_file
         aware-echo "added \"$@\" to sparks"
         exit 0
         ;;
@@ -90,14 +97,16 @@ main() {
     done
     
     # if nothing else print a random spark
-    aware-echo "${sparks[RANDOM % ${#sparks[@]}]}"
+
+    random_index=$(shuf -i 0-$(( ${#sparks[@]} - 1 )) -n 1)
+    aware-echo "${sparks[random_index]}"
     exit 0
 }
 
 # defs
 print-usage() {
     cat << USAGE 
-usage: spark [options] <spark>
+usage: spark [options] <spark> or <count>
 
 call spark to show a simple cognitohazard at random 
 
@@ -107,13 +116,17 @@ options:
     -h --help      
         print this message
     -r --remove    
-        remove <spark> from .sparks
+        remove <spark> from $spark_file
     -l --list      
         list all <spark>s
+    -e --edit
+        open $spark_file in $EDITOR
 
 arguments:
     <spark>
         a small note to yourself to be shown to you at random
+    <count>
+        amount of sparks to display
 USAGE
 
 }

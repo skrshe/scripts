@@ -1,0 +1,10 @@
+#!/bin/env bash
+if xdotool search --class "todonvim" > /dev/null; then
+    i3-msg '[class="todonvim"] floating enable; resize set 200 300; move position 1150px 10px'
+else
+    alacritty --working-directory "$(xcwd)" --class todonvim -e  nvim todo.md  -c "set so=0 siso=0 nowrap" &
+    sleep .2
+    i3-msg '[class="todonvim"] floating enable; resize set 200 300; move position 1150px 10px'
+fi
+# i3-msg
+

@@ -1,0 +1,18 @@
+#!/bin/env bash
+
+#[] toggle state and kill aplay on press before audio finished
+xclip -o \
+    | ~/bin/tools/piper-ts/piper --model ~/.local/pipertts/arctic/en_US-arctic-medium.onnx --output-raw \
+    | aplay -r 24000 -f S16_LE -t raw -\
+    | tee >(notify-send "tts ready">/dev/null) 
+# or
+# pkill aplay
+
+# One can subvert the long pauses by feeding piper-tts all the data at once, instead of chunked, as speech-dispatcher by default does for workload reasons.
+#
+# Add these two lines to your piper.conf
+#
+# # as adviced by https://htmlpreview.github.io/?https://github.com/brailcom/speechd/blob/master/doc/speech-dispatcher.html#Configuration-files-of-output-modules
+# GenericDelimiters "|"  # "|" never occurs
+# GenericMaxChunkLength 99999
+# I don't think the reasons for having chunking applies to piper-tts, so perhaps this should just be set as the default that this package ships with.

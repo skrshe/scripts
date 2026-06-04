@@ -22,12 +22,21 @@ main() {
         exit 0
         ;;
 
+    -e|--edit)
+        nvim build.sh
+        exit ;;
+
     --) shift; break ;;
 
     *) break ;;
     esac 
     done
-    
+   
+    if [[ -f Makefile ]]; then
+        make
+        exit
+    fi
+
     if ls build.sh &> /dev/null; then # || [ -f build*.sh]; then
         if [ ! -x build.sh ]; then
             echo Warning: build.sh is not executable
@@ -38,17 +47,19 @@ main() {
         exit 0
     
     elif ls nob.c &> /dev/null; then
-        echo running zozin\'s nob:
+        echo running zozin\'s nob
         cc nob.c -o nob
         ./nob
     
     elif ls *.odin &> /dev/null; then
-        echo running odin run:
-        odin run .
+        echo "running odin build & ./$(basename $PWD)"
+        odin build .
+        ./"$(basename $PWD)"
+
         exit 0
     
     elif ls *.go &> /dev/null; then
-        echo running go run:
+        echo running go run
         go run .
         exit 0
     fi

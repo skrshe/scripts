@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+#  delete this line. adding text while testing
 # dmenu theming
 lines="-l 4"
 # font="-fn Inconsolata-15"
@@ -24,23 +25,23 @@ case $answer in
     "Log-out")
         ask "$opt2" "Log out of i3?"
         if [[ $answer == "Yes" ]]; then
-			i3-msg exit
+			   i3-msg exit
             # xfce4-session-logout -l
-		fi
+		  fi
         exit 0
         ;;
     "Restart")
         ask "$opt2" "Restart $HOSTNAME?"
         if [[ $answer == "Yes" ]]; then
-			systemctl reboot
-		fi
+			   systemctl reboot
+		  fi
         exit 0
         ;;
     "Shutdown")
         ask "$opt2" "Shutdown $HOSTNAME?"
         if [[ $answer == "Yes" ]]; then
-			systemctl poweroff
-		fi
+			   systemctl poweroff
+		  fi
         exit 0
         ;;
 esac

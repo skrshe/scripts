@@ -1,0 +1,155 @@
+#!/bin/env bash
+
+# TODO:
+# -r in non int mode
+# dont take hours with new lines
+
+# main loop setup
+main() {
+    hours_file="$HOME/.hours"
+
+    # make sure .hours file exits
+    if [[ ! -f $hours_file ]]; then
+        echo "$(date +'%Y')" >> $hours_file
+        echo "$(date +'%B')" >> $hours_file
+        echo "$(date +'%a %d/%m/%y')" >> $hours_file 
+        aware-echo "created ~/.hours"
+    fi
+
+    # get hours
+    mapfile -t hours < $hours_file
+
+    # handle flags
+    while true; do
+    case $1 in
+    -h|--help)   
+        print-usage
+        exit 0
+        ;;
+
+    -r|--remove) 
+        [[ ! -t 0 || ! -t 1 || ! -t 2 ]] \
+            && aware-echo "-r via popup not available yet" && exit 1
+
+        shift
+        
+        if [[ $(tail -n 1 $hours_file) =~ ^[0-9:] ]]; then
+            aware-echo "deleting  $(tail -n 1 $hours_file)"
+            sed -i '$d' $hours_file
+        fi
+
+        aware-echo "no hours left to delete for today"
+        exit 1
+        ;;
+
+    -l|--list)   
+        echo "# hours:" 
+
+        cat $hours_file; 
+        exit 0
+        ;;
+
+    -e|--edit)
+        $EDITOR $hours_file;
+        exit 0
+        ;;
+
+    -m)
+        shift
+
+        # add to hours
+        if [[ !  "$@" =~ [0-9]:[0-9] ]]; then
+            aware-echo "$@ is formmated wrong. minutes only in -m mode"
+            exit 1
+        fi
+
+        echo $@ >> $hours_file
+        aware-echo "added \"$@\" to hours"
+        exit 0
+        ;;
+
+    -*)          
+        aware-echo "$1 not a supported flag. -h for help" 
+        exit 1
+        ;;
+
+    ?*)
+        # add to hours
+        if [[ !  "$@" =~ ^[0-9]*:[0-9]*$ | ! "$@" =~ [0-9]* ]]; then
+            aware-echo "$@ is formmated wrong. hours:minutes"
+            exit 1
+        fi
+
+        echo $@ >> $hours_file
+        aware-echo "added \"$@\" to hours"
+        exit 0
+        ;;
+
+    *) break;;
+    esac
+    done
+    
+    # if nothing else print a random hours
+
+    random_index=$(shuf -i 0-$(( ${#hours[@]} - 1 )) -n 1)
+    aware-echo "${hours[random_index]}"
+    exit 0
+}
+
+# defs
+print-usage() {
+    cat << USAGE 
+usage: hours [options] <time>
+
+call hours to tally time spent per 
+
+options:
+    -h --help      
+        print this message
+    default
+        add <time> to $hours_file in hour:minute format
+    -m
+        add minutes without : to $hours_file
+    -r --remove    
+        remove <time> from $hours_file
+    -l --list      
+        list all <time> in hours 
+    -e --edit
+        open $hours_file in $EDITOR
+
+arguments:
+    <time>
+        time to add to today
+USAGE
+
+}
+
+aware-echo() {
+    [[ ! -t 0 || ! -t 1 || ! -t 2 ]] \
+        && notify-send $@ \
+        || echo -e "$@" 
+}
+
+yes="^[Yy][Ee]?[Ss]?$"
+asky() { [[ `ask "$1"` =~ $yes ]] || return 1; }
+askn() { [[ `ask "$1" no` =~ $yes ]] || return 1; }
+
+print-hours() {
+    [[ $1 == -a || $1 == --all ]] && shift && aware-echo $@ 
+    # get "n " as "n"
+    weight="${1%% *}"
+    # get rest as info
+    info="${1#* }"
+
+    # get ^.*: as alias
+    alias="${info%%:*}"
+
+    # get ": stuff" as stuff
+    details="${info#*: }"
+    
+
+    echo $alias
+}
+
+# call main loop
+main "$@"

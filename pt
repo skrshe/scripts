@@ -1,0 +1,3 @@
+#!/bin/env bash
+picotron &> /tmp/picotron.log
+
