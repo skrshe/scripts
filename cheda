@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+items=(
+  "Cheddar"
+  "Gouda"
+  "Brie"
+  "Camembert"
+  "Manchego"
+  "Gruyere"
+  "Parmesan"
+  "Roquefort"
+  "Monterey Jack"
+  "Havarti"
+  "Colby"
+  "Asiago"
+)
+
+usage() {
+  echo "Usage: $0 [-add item1,item2,item3]" >&2
+}
+
+if [ "$#" -gt 0 ]; then
+  case "$1" in
+    -add)
+      shift
+
+      if [ "$#" -eq 0 ]; then
+        usage
+        exit 1
+      fi
+
+      add_input="$*"
+      if [ -z "$add_input" ]; then
+        usage
+        exit 1
+      fi
+
+      IFS=',' read -r -a items <<< "$add_input"
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+fi
+
+filtered_items=()
+for item in "${items[@]}"; do
+  if [ -n "$item" ]; then
+    filtered_items+=("$item")
+  fi
+done
+
+if [ "${#filtered_items[@]}" -eq 0 ]; then
+  echo "No items configured" >&2
+  exit 1
+fi
+
+printf '%s\n' "${filtered_items[RANDOM % ${#filtered_items[@]}]}"

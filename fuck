@@ -1,0 +1,37 @@
+#!/bin/env zsh
+
+fucks=(
+    "a life time and no real use found"
+    "deleting root..."
+    "3h and naut to show but a missing semicolon"
+    "no fuk u"
+    "cheese"
+    "..."
+    "${SHELL##*/}: command not happy. says u a bitch: fuck"
+    "take my condolences"
+    "boo hoo cry baby"
+    "knock knock"
+    "fuck"
+    "testicles. that is all."
+    "let me drop that for you"
+    "killing time I see"
+    "awww aw wu mad ^^"
+    "dream big cowboy"
+    "owo"
+    "uwu"
+    "oWo"
+    "OwO"
+    "OWO"
+    "-w-"
+    "no u"
+)
+aware-echo() { 
+    [[ ! -t 0 || ! -t 1 || ! -t 2 ]] && notify-send "$@" || echo -e "$@"
+}
+
+clear
+echo -n ":: "
+echo "fuck $@"
+
+random_index=$(shuf -i 0-$(( ${#fucks[@]} - 1 )) -n 1)
+aware-echo "${fucks[$random_index]}"

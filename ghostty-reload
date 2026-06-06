@@ -1,0 +1,19 @@
+#!/bin/bash
+# Trigger ghostty config reload
+if pgrep -x ghostty &> /dev/null; then
+  ghostty_ids=$(i3-msg -t get_tree | jq '[.. | select(.window_properties?.class? == "com.mitchellh.ghostty") | .id] | unique')
+
+  if [[ "$ghostty_ids" != "[]" ]]; then
+    current_id=$(i3-msg -t get_tree | jq '.. | select(.focused == true) | .id')
+
+    echo "$ghostty_ids" | jq -r '.[]' | while IFS= read -r id; do
+      i3-msg "[con_id=\"$id\"] focus" > /dev/null
+      sleep 0.1
+      xdotool key --clearmodifiers ctrl+shift+comma
+    done
+
+    if [[ -n "$current_id" ]]; then
+      i3-msg "[con_id=\"$current_id\"] focus" > /dev/null
+    fi
+  fi
+fi
