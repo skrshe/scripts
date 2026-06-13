@@ -30,7 +30,7 @@ case $choice in
 snap)
     file=${file:-"clip_$dateline.png"}
     timeout=${3:-1}
-    [ ! $timeout > 2 ] && countdownify $timeout
+    [ ! "$timeout" -gt 2 ] && countdownify "$timeout"
 
     maim -u $dir/$file \
 		&& completed=1 \
@@ -41,7 +41,7 @@ clip)
     geometry=$(slop)
 
     timeout=${3:-1}
-    [ ! $timeout > 2 ] && countdownify $timeout
+    [ ! "$timeout" -gt 2 ] && countdownify "$timeout"
 
 	maim -u -g $geometry  $dir/$file \
 		&& completed=1 \
@@ -51,7 +51,7 @@ shot)
     file=${file:-"clip_$dateline.png"}
 
     timeout=${3:-1}
-    [ ! $timeout > 2 ] && countdownify $timeout
+    [ ! "$timeout" -gt 2 ] && countdownify "$timeout"
 
     maim -u $dir/$file \
 		&& completed=1 \
