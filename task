@@ -1,0 +1,236 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TASKS_DIR="tasks"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+RESET='\033[0m'
+
+usage() {
+	cat <<-EOF
+	Usage:
+	  bin/task create [-p <priority>] <title> [detail...]
+	  bin/task [list]
+	  bin/task query [is:open|is:closed] [tag:<tag>] [not-tag:<tag>] [text...]
+	  bin/task close <pattern>
+	  bin/task open <pattern>
+	  bin/task delete <pattern>
+	EOF
+	exit 1
+}
+
+slugify() {
+	echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g; s/^-//; s/-$//'
+}
+
+parse_meta_fields() {
+	local f="$1"
+	sed -n '1s/^# //p' "$f"
+	sed -n 's/^- STATUS: //p' "$f"
+	sed -n 's/^- PRIORITY: //p' "$f"
+	sed -n 's/^- TAGS: //p' "$f"
+	echo "---END---"
+	tail -n +6 "$f" | head -30
+}
+
+# Find a task file by partial name (slug, date-seq, or substring).
+# Returns the full path if exactly one match.
+resolve_task() {
+	local pattern="$1"
+	[ -z "$pattern" ] && return 1
+	local matches=()
+	for f in "$TASKS_DIR"/*.md; do
+		bn=$(basename "$f" .md)
+		case "$bn" in
+			*"$pattern"*) matches+=("$f") ;;
+		esac
+	done
+	case ${#matches[@]} in
+		0) echo "No task matches '$pattern'"; return 1 ;;
+		1) echo "${matches[0]}"; return 0 ;;
+		*) echo "Multiple tasks match '$pattern':"; for m in "${matches[@]}"; do echo "  $(basename "$m" .md)"; done; return 1 ;;
+	esac
+}
+
+cmd_set_status() {
+	local status="$1"
+	shift
+	[ $# -lt 1 ] && usage
+	local file=$(resolve_task "$1")
+	[ $? -ne 0 ] && { echo "$file"; exit 1; }
+	sed -i "s/^- STATUS: .*/- STATUS: $status/" "$file"
+	echo "$(basename "$file" .md) → $status"
+}
+
+cmd_create() {
+	local prio=50
+	while getopts "p:" opt; do
+		case "$opt" in
+			p) prio="$OPTARG" ;;
+			*) usage ;;
+		esac
+	done
+	shift $((OPTIND-1))
+	if [ $# -lt 1 ]; then usage; fi
+	local title="$1"
+	shift
+	local detail="$*"
+
+	local today=$(date +%y%m%d)
+	local highest=0
+	for f in "$TASKS_DIR"/"$today"*.md; do
+		[ -f "$f" ] || continue
+		local b=$(basename "$f")
+		local n=${b:6:2}
+		n=$((10#$n))
+		[ "$n" -gt "$highest" ] && highest=$n
+	done
+	local seqno=$(printf "%02d" $((highest + 1)))
+	local slug=$(slugify "$title")
+	local filename="$today$seqno-$slug.md"
+
+	cat > "$TASKS_DIR/$filename" <<-ISSUE
+	# $title
+
+	- STATUS: OPEN
+	- PRIORITY: $prio
+	- TAGS:
+
+	$(test -n "$detail" && echo "$detail" || echo "TODO: fill in description")
+
+	ISSUE
+	echo "Created: tasks/$filename"
+}
+
+cmd_list() {
+	local mode="${1:-list}"
+	shift || true
+	local query_terms=("$@")
+
+	local want_status=""
+	local include_tags=""
+	local exclude_tags=""
+	local text_terms=""
+
+	if [ "$mode" = "query" ]; then
+		for t in "${query_terms[@]}"; do
+			case "$t" in
+				is:open) want_status="OPEN" ;;
+				is:closed) want_status="CLOSED" ;;
+				tag:unplanned) include_tags="${include_tags},not-planned" ;;
+				tag:*) include_tags="${include_tags},${t#tag:}" ;;
+				not-tag:*) exclude_tags="${exclude_tags},${t#not-tag:}" ;;
+				*) text_terms="$text_terms $t" ;;
+			esac
+		done
+	fi
+
+	# Default: hide closed and not-planned in both list and query.
+	# Query mode: explicit is:closed or tag:not-planned overrides.
+	local hide_closed=true
+	local hide_not_planned=true
+	if [ "$mode" = "query" ]; then
+		[ -n "$want_status" ] && hide_closed=false
+		case ",${include_tags#}," in *",not-planned,"*) hide_not_planned=false ;; esac
+	fi
+
+	local entries=()
+	for f in "$TASKS_DIR"/*.md; do
+		[ -f "$f" ] || continue
+		entries+=("$f")
+	done
+	if [ ${#entries[@]} -eq 0 ]; then
+		echo "No tasks found."
+		return
+	fi
+
+	for f in "${entries[@]}"; do
+		local meta=$(parse_meta_fields "$f")
+		local title=$(echo "$meta" | sed -n '1p')
+		local status=$(echo "$meta" | sed -n '2p')
+		local prio=$(echo "$meta" | sed -n '3p')
+		local tags=$(echo "$meta" | sed -n '4p')
+		local body=$(echo "$meta" | sed -n '6,$p')
+		[ -z "$prio" ] && prio=50
+		[ -z "$status" ] && status=OPEN
+
+		# is: filter
+		if [ -n "$want_status" ]; then
+			[ "$status" != "$want_status" ] && continue
+		fi
+
+		# tag: filter (any match)
+		if [ -n "$include_tags" ]; then
+			local matched=false
+			IFS=',' read -ra itags <<< "${include_tags#,}"
+			for it in "${itags[@]}"; do
+				[ -z "$it" ] && continue
+				case ",$tags," in *",$it,"*) matched=true; break ;; esac
+			done
+			$matched || continue
+		fi
+
+		# not-tag: filter (any match = reject)
+		if [ -n "$exclude_tags" ]; then
+			local excluded=false
+			IFS=',' read -ra etags <<< "${exclude_tags#,}"
+			for et in "${etags[@]}"; do
+				[ -z "$et" ] && continue
+				case ",$tags," in *",$et,"*) excluded=true; break ;; esac
+			done
+			$excluded && continue
+		fi
+
+		# text match (all words)
+		if [ -n "$text_terms" ]; then
+			local combined="$title $body"
+			local text_match=true
+			for word in $text_terms; do
+				case "$combined" in *"$word"*) ;; *) text_match=false; break ;; esac
+			done
+			$text_match || continue
+		fi
+
+		# Hide closed and not-planned unless overridden.
+		$hide_closed && [ "$status" = "CLOSED" ] && continue
+		$hide_not_planned && case ",$tags," in *",not-planned,"*) continue ;; esac
+
+		prio=$(echo "$prio" | sed 's/^0*//')
+		[ -z "$prio" ] && prio=0
+		printf "%d|%s|%s|%s|%s\n" "$prio" "$status" "$tags" "$title" "$(basename "$f" .md)"
+	done | sort -t'|' -k1 -n -k5 | while IFS='|' read -r p s t tl fn; do
+		case "$s" in
+			CLOSED|RESOLVED) color="$RED"; label="CLOSED" ;;
+			OPEN)            color="$GREEN"; label="OPEN" ;;
+			*)               color="$RESET"; label="$s" ;;
+		esac
+		printf "P%-3d ${color}[%s]${RESET} %s\n" "$p" "$label" "$tl"
+	done
+}
+
+[ $# -eq 0 ] && set -- "list"
+
+cmd_delete() {
+	[ $# -lt 1 ] && usage
+	local file=$(resolve_task "$1")
+	[ $? -ne 0 ] && { echo "$file"; exit 1; }
+	local bn=$(basename "$file")
+	echo "Delete tasks/$bn?"
+	read -r -p "[y/N] " reply
+	case "$reply" in
+		y|Y|yes|Yes) rm "$file"; echo "Deleted tasks/$bn" ;;
+		*) echo "Canceled" ;;
+	esac
+}
+
+case "$1" in
+	create) shift; cmd_create "$@" ;;
+	list)   cmd_list "list" ;;
+	query)  shift; cmd_list "query" "$@" ;;
+	close)  shift; cmd_set_status "CLOSED" "$@" ;;
+	open)   shift; cmd_set_status "OPEN" "$@" ;;
+	delete) shift; cmd_delete "$@" ;;
+	help|--help|-h) usage ;;
+	*) usage ;;
+esac

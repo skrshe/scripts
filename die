@@ -1,0 +1,15 @@
+#!/bin/env python
+
+import sys
+import random
+
+args = sys.argv[1:]
+
+if len(args) > 0 and args[0].isdigit():
+    print(random.randint(1,int(args[0])))
+elif len(args) == 0:
+    print(random.randint(1,20))
+
+
+
+
